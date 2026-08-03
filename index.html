@@ -2,6 +2,7 @@
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ctext y=%2213%22 font-size=%2213%22%3E%F0%9F%8E%9B%3C/text%3E%3C/svg%3E">
 <title>VES OPS — 운영 대시보드</title>
 <style>
 :root{--ground:#eef1f4;--panel:#fff;--side:#1e2833;--side-ink:#aebbc7;--side-on:#fff;
@@ -35,6 +36,8 @@ main{flex:1;min-width:0;padding:0 26px 60px}
 .card{background:var(--panel);border:1px solid var(--soft)}
 .thumb{aspect-ratio:16/9;background:#0003;display:block;position:relative;overflow:hidden}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.nothumb{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(128,128,128,.14) 6px 7px)}
+.thumb.nothumb::after{content:"썸네일 없음 · 비공개/삭제";font-size:10.5px;color:var(--ink3);text-align:center;padding:0 10px}
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:1.5px 9px;border-radius:20px}
 .pill.pub{background:var(--okbg);color:var(--ok)}.pill.unl{background:var(--warnbg);color:var(--warn)}
 .pill.gone{background:var(--badbg);color:var(--bad)}.pill.na{background:var(--soft);color:var(--ink3)}
@@ -55,6 +58,7 @@ tr.rowlink{cursor:pointer}tr.rowlink:hover td{background:var(--accent-soft)}
 .note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 13px;font-size:12.5px;color:var(--ink2);margin:0 0 16px}
 .err{border-left-color:var(--bad);background:var(--badbg);color:var(--bad)}
 #login{position:fixed;inset:0;background:var(--ground);display:flex;align-items:center;justify-content:center;z-index:9}
+#login[hidden]{display:none}/* ★ #login 의 display:flex 가 hidden 속성을 이겨서 로그인 후에도 화면을 덮었다 */
 #login .box{background:var(--panel);border:1px solid var(--soft);padding:28px;width:320px}
 #login h1{font-size:17px;margin:0 0 4px}#login p{font-size:12.5px;color:var(--ink2);margin:0 0 14px}
 #login input{width:100%;padding:9px 11px;font:inherit;border:1px solid var(--line);background:var(--ground);color:var(--ink);margin-bottom:10px}
@@ -139,7 +143,7 @@ function renderFeed(){
   if(!items.length){$('#feed-grid').innerHTML='<div class="skel">표시할 클립이 없습니다.</div>';return;}
   $('#feed-grid').innerHTML=items.map(x=>{
     const vid=x.video_id;const st=x._st&&PILL[x._st.privacy]||['na','상태 미확인'];
-    const thumb=vid?'<img loading="lazy" src="https://i.ytimg.com/vi/'+vid+'/mqdefault.jpg" alt="">':'';
+    const thumb=vid?'<img loading="lazy" src="https://i.ytimg.com/vi/'+vid+'/mqdefault.jpg" alt="" onerror="this.remove();this.closest(\'.thumb\').classList.add(\'nothumb\')">':'';
     const when=(x.created_at||'').slice(5,16).replace('T',' ');
     return '<div class="card"><a class="thumb" '+(vid?'href="https://www.youtube.com/shorts/'+vid+'" target="_blank" rel="noopener"':'')+'>'
       +thumb+'<span class="pill '+st[0]+'">'+st[1]+'</span></a>'
