@@ -100,7 +100,7 @@ aside nav a.on{border-left-color:transparent;border-bottom-color:#e8b04b}.side-f
 const $=(s)=>document.querySelector(s);
 const KEY=()=>localStorage.getItem('ves_key')||'';
 const api=async(path)=>{
-  const r=await fetch(path,{headers:{'x-ves-key':KEY()}});
+  const r=await fetch(path,{headers:{'x-ves-key':encodeURIComponent(KEY())}});
   if(r.status===401){showLogin('코드가 틀렸거나 만료됐습니다.');throw new Error('unauthorized');}
   if(r.status===503){const b=await r.json();if(b.setup){showSetup();throw new Error('setup');}}
   return r.json();
@@ -108,7 +108,8 @@ const api=async(path)=>{
 function showLogin(msg){$('#login').hidden=false;$('#pwmsg').textContent=msg||'';}
 function showSetup(){$('#login').hidden=false;$('#pwmsg').textContent='서버에 DASHBOARD_PASSWORD 시크릿이 아직 설정되지 않았습니다. 관리자에게 문의하세요.';}
 $('#pwgo').onclick=async()=>{localStorage.setItem('ves_key',$('#pw').value.trim());
-  try{await api(BASE+'/api/feed?days=1');$('#login').hidden=true;boot();}catch(e){}};
+  try{await api(BASE+'/api/feed?days=1');$('#login').hidden=true;boot();}
+  catch(e){if(e&&e.message!=='unauthorized'&&e.message!=='setup')showLogin('접속 실패: '+e.message);}};
 $('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#pwgo').click()});
 
 const BASE='https://fdidiqdhcyctdbogxkdu.supabase.co/functions/v1/dashboard';
