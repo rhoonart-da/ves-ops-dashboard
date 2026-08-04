@@ -95,6 +95,7 @@ aside nav a.on{border-left-color:transparent;border-bottom-color:#e8b04b}.side-f
     <span style="margin-left:auto" class="filters">
       <span class="chip on" data-days="7">7일</span><span class="chip" data-days="28">28일</span>
     </span></div>
+  <p class="note">평균시청·지속시청은 <b>조회수 가중평균</b>입니다. Shorts 는 반복 재생돼 <b>평균시청%가 100%를 넘을 수 있습니다</b>(정상). 또한 짧은 영상일수록 이 비율이 유리하므로, 채널 비교는 <b>시청시간</b>을 함께 보세요.</p>
   <div id="perf-note"></div>
   <div class="panel"><h3>채널 리그테이블</h3><div class="tblw" id="perf-table"><div class="skel">불러오는 중…</div></div></div>
   <div class="panel" id="drill" hidden><h3 id="drill-title"></h3><div class="tblw" id="drill-table"></div></div>
@@ -181,10 +182,11 @@ async function loadPerf(){
   if(d.error){$('#perf-note').innerHTML='<p class="note err">성과 조회 오류: '+d.error+'</p>';return;}
   $('#perf-note').innerHTML='';
   const max=Math.max(...d.channels.map(c=>c.views),1);
-  $('#perf-table').innerHTML='<table><tr><th>채널</th><th>머신</th><th class="num">조회수 '+DAYS+'d</th><th></th><th class="num">평균시청%</th><th class="num">지속시청%</th><th class="num">좋아요</th><th class="num">수익(원)</th><th>추이 14d</th></tr>'
+  $('#perf-table').innerHTML='<table><tr><th>채널</th><th>머신</th><th class="num">조회수 '+DAYS+'d</th><th></th><th class="num">시청시간(h)</th><th class="num">평균시청%</th><th class="num">지속시청%</th><th class="num">좋아요</th><th class="num">수익(원)</th><th>추이 14d</th></tr>'
     +d.channels.map(c=>'<tr class="rowlink" data-ch="'+c.channel_id+'" data-name="'+c.name+'">'
     +'<td><b>'+c.name+'</b></td><td class="mac">'+(c.mac||'—')+'</td>'
     +'<td class="num">'+fmt(c.views)+'</td><td><span class="bar" style="width:'+Math.max(2,(c.views/max)*90)+'px"></span></td>'
+    +'<td class="num">'+pct(c.watch_hours)+'</td>'
     +'<td class="num">'+pct(c.apv)+'</td><td class="num">'+pct(c.kwr)+'</td>'
     +'<td class="num">'+fmt(c.likes)+'</td><td class="num">'+fmt(c.profits_krw==null?null:Math.round(c.profits_krw))+'</td>'
     +'<td>'+spark(c.daily)+'</td></tr>').join('')+'</table>';
@@ -195,9 +197,11 @@ async function drill(chId,name){
   $('#drill-table').innerHTML='<div class="skel">불러오는 중…</div>';
   const d=await api(BASE+'/api/videos?channel_id='+chId+'&days=28');
   if(d.error){$('#drill-table').innerHTML='<p class="note err">'+d.error+'</p>';return;}
-  $('#drill-table').innerHTML='<table><tr><th>영상</th><th class="num">조회수</th><th class="num">평균시청%</th><th class="num">좋아요</th><th class="num">수익(원)</th><th>업로드</th><th></th></tr>'
+  $('#drill-table').innerHTML='<table><tr><th>영상</th><th class="num">길이(초)</th><th class="num">조회수</th><th class="num">시청시간(h)</th><th class="num">평균시청%</th><th class="num">좋아요</th><th class="num">수익(원)</th><th>업로드</th><th></th></tr>'
     +d.videos.map(v=>'<tr><td style="max-width:420px;overflow:hidden;text-overflow:ellipsis">'+(v.title||v.content_id)+'</td>'
-    +'<td class="num">'+fmt(v.views)+'</td><td class="num">'+pct(v.apv)+'</td><td class="num">'+fmt(v.likes)+'</td>'
+    +'<td class="num">'+(v.length_sec==null?'—':Math.round(v.length_sec))+'</td>'
+    +'<td class="num">'+fmt(v.views)+'</td><td class="num">'+pct(v.watch_hours)+'</td>'
+    +'<td class="num">'+pct(v.apv)+'</td><td class="num">'+fmt(v.likes)+'</td>'
     +'<td class="num">'+fmt(v.profits_krw==null?null:Math.round(v.profits_krw))+'</td>'
     +'<td>'+String(v.uploaded||'').slice(0,10)+'</td>'
     +'<td><a class="lnk" href="https://www.youtube.com/watch?v='+v.content_id+'" target="_blank" rel="noopener">▶</a></td></tr>').join('')+'</table>';
