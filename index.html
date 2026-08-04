@@ -161,7 +161,7 @@ function StatusPill({ st }) {
 // ── 홈 · 검수함 ──
 function HomePage({ machines, queue, yt, now }) {
   // 검수 대상: stale 아님 + (미업로드 || 업로드됐는데 아직 public 아님)
-  const items = queue.filter((q) => !q.stale).map((q) => {
+  const items = queue.filter((q) => !q.stale && !q.unknown).map((q) => {
     const st = q.video_id ? yt[q.video_id]?.privacy : null;
     return { ...q, yt: st };
   });
@@ -320,9 +320,14 @@ function PerfPage() {
 }
 
 // ── 머신 로그 ──
-function MachinesPage({ machines, now }) {
+function MachinesPage({ machines, now, anomalies }) {
   return html`<div class="page">
     <div class="topbar"><h2>머신 로그</h2><span class="sub">최근 실행의 채널별 결과 · 실패 상세 · 무보고 경보</span></div>
+    ${anomalies?.length ? html`<div class="panel"><h3>⚠ 상태 파일 이상 — 정본과 어긋난 채널명</h3>
+      <p class="note">아래 항목은 <b>검수함에서 제외</b>됩니다(추측하지 않음). 각 머신의 <code>results/scene_loop_state.json</code> 키를 <code>config/channels.json</code> 이름으로 교정하면 정상 집계됩니다.</p>
+      ${anomalies.map((a, i) => html`<div class="runline" key=${i}>
+        <span><span class="mac">${a.mac}</span> ${a.channel}</span>
+        <span class="st warn">${a.reason}</span></div>`)}</div>` : null}
     <div class="mac-grid">${machines.map((m) => {
       const b = m.beat;
       const chs = b?.channels ?? [];
@@ -413,7 +418,7 @@ function App() {
   const [authed, setAuthed] = useState(null); // null=확인중 false=로그인 true=OK
   const [page, setPage] = useState("home");
   const [feed, setFeed] = useState([]);
-  const [mx, setMx] = useState(null);        // {machines, queue, now}
+  const [mx, setMx] = useState(null);        // {machines, queue, anomalies, now}
   const [commits, setCommits] = useState(null);
   const [yt, setYt] = useState({});          // video_id -> {privacy}
   const [ytConfigured, setYtConfigured] = useState(true);
@@ -450,7 +455,7 @@ function App() {
 
   const machines = mx?.machines ?? [];
   const queue = mx?.queue ?? [];
-  const reviewCount = queue.filter((q) => !q.stale && (!q.video_id || (yt[q.video_id] && !["public", "gone"].includes(yt[q.video_id].privacy)))).length;
+  const reviewCount = queue.filter((q) => !q.stale && !q.unknown && (!q.video_id || (yt[q.video_id] && !["public", "gone"].includes(yt[q.video_id].privacy)))).length;
 
   return html`<div class="shell">
     <aside>
@@ -471,7 +476,7 @@ function App() {
       ${page === "home" ? html`<${HomePage} machines=${machines} queue=${queue} yt=${yt} now=${mx?.now} />` : null}
       ${page === "feed" ? html`<${FeedPage} feed=${feed} yt=${yt} ytConfigured=${ytConfigured} />` : null}
       ${page === "perf" ? html`<${PerfPage} />` : null}
-      ${page === "machines" ? html`<${MachinesPage} machines=${machines} now=${mx?.now} />` : null}
+      ${page === "machines" ? html`<${MachinesPage} machines=${machines} now=${mx?.now} anomalies=${mx?.anomalies ?? []} />` : null}
       ${page === "deploy" ? html`<${DeployPage} machines=${machines} commits=${commits} />` : null}
     </main>
   </div>`;
